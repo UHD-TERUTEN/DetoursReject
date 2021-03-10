@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="ModuleInfo.cpp">
+      <Filter>test</Filter>
+    </ClCompile>
+    <ClCompile Include="utilities.cpp">
+      <Filter>test</Filter>
+    </ClCompile>
+    <ClCompile Include="FileAccessInfo.cpp">
+      <Filter>test</Filter>
+    </ClCompile>
+    <ClCompile Include="FileInfo.cpp">
+      <Filter>test</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="test">
+      <UniqueIdentifier>{ea0fec96-d8cf-481d-ac1f-f16d7217e90c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
