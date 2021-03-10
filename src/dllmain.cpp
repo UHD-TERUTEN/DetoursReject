@@ -17,6 +17,9 @@ static PReadFile TrueReadFile = ReadFile;
 
 static constexpr char pipeName[] = R"(\\.\pipe\RejectLogPipe)";
 
+static std::string cachedFileName = "";
+static BOOL cachedResult = FALSE;
+
 
 __declspec(dllexport)
 BOOL WINAPI ReadFileOrReject(   HANDLE        hFile,
@@ -25,27 +28,28 @@ BOOL WINAPI ReadFileOrReject(   HANDLE        hFile,
                                 LPDWORD       lpNumberOfBytesRead,
                                 LPOVERLAPPED  lpOverlapped)
 {
-    auto ret = TrueReadFile
-    (
-        hFile,
-        lpBuffer,
-        nNumberOfBytesToRead,
-        lpNumberOfBytesRead,
-        lpOverlapped
-    );
-
-    // Construct json log
     nlohmann::json json{};
+    BOOL ret{};
     try
     {
         json = {};
         {
-            auto fileAccessInfo = MakeFileAccessInfo(__FUNCTION__, ret);
-            json["fileAccessInfo"] = GetJson(fileAccessInfo);
-        }
-        {
             auto fileInfo = MakeFileInfo(hFile);
             json["fileInfo"] = GetJson(fileInfo);
+
+            if (fileInfo.fileName == cachedFileName)
+                return cachedResult ?
+                TrueReadFile
+                (
+                    hFile,
+                    lpBuffer,
+                    nNumberOfBytesToRead,
+                    lpNumberOfBytesRead,
+                    lpOverlapped
+                )
+                : FALSE;
+
+            cachedFileName = fileInfo.fileName;
 
             if (IsExecutable(fileInfo))
             {
@@ -54,6 +58,18 @@ BOOL WINAPI ReadFileOrReject(   HANDLE        hFile,
             }
             else
                 json["moduleInfo"] = nullptr;
+        }
+        {
+            ret = TrueReadFile
+            (
+                hFile,
+                lpBuffer,
+                nNumberOfBytesToRead,
+                lpNumberOfBytesRead,
+                lpOverlapped
+            );
+            auto fileAccessInfo = MakeFileAccessInfo(__FUNCTION__, ret);
+            json["fileAccessInfo"] = GetJson(fileAccessInfo);
         }
     }
     catch (std::exception& e)
@@ -83,14 +99,14 @@ BOOL WINAPI ReadFileOrReject(   HANDLE        hFile,
         (void)FlushFileBuffers(pipe);
         (void)memset(buffer, 0, BUFSIZ);
 
-        if (ReadFile(pipe, buffer, 1, &nbytes, NULL))
+        if (ReadFile(pipe, buffer, 5, &nbytes, NULL))
         {
-            auto ret = (bool)*buffer;
+            ret = ("True"s == buffer);
             (void)FlushFileBuffers(pipe);
         }
     }
     CloseHandle(pipe);
-    return ret;
+    return (cachedResult = ret);
 }
 
 void WINAPI ProcessAttach(  HMODULE hModule,
