@@ -18,10 +18,43 @@ bool IsExecutable(const FileInfo& fileInfo)
         || GetFileExtension(fileInfo.fileName) == ".dll";
 }
 
-std::wstring ToWstring(const std::string& s)
+std::wstring ToWstring(const std::string& utf8)
 {
-    std::wstring res(std::begin(s), std::end(s));
-    return res;
+    std::wstring wstr{};
+
+    do
+    {
+        if (utf8.empty())
+            break;
+        //
+        // getting required cch.
+        //
+        int required_cch = ::MultiByteToWideChar(
+            CP_UTF8,
+            MB_ERR_INVALID_CHARS,
+            utf8.c_str(), static_cast<int>(utf8.size()),
+            nullptr, 0
+        );
+        if (0 == required_cch)
+            break;
+        //
+        // allocate.
+        //
+        wstr.resize(required_cch);
+        //
+        // convert.
+        //
+        if (0 == ::MultiByteToWideChar(
+            CP_UTF8,
+            MB_ERR_INVALID_CHARS,
+            utf8.c_str(), static_cast<int>(utf8.size()),
+            const_cast<wchar_t*>(wstr.c_str()), static_cast<int>(wstr.size())
+        ))
+        {
+            break;
+        }
+    } while (false);
+    return wstr;
 }
 
 // https://wendys.tistory.com/84

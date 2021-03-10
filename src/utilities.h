@@ -8,7 +8,7 @@ using namespace LogData;
 
 bool IsExecutable(const FileInfo& fileInfo);
 
-std::wstring ToWstring(const std::string& s);
+std::wstring ToWstring(const std::string& utf8);
 
 std::string ToUtf8String(const wchar_t* unicode, const size_t unicode_size);
 

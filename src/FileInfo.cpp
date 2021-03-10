@@ -7,6 +7,14 @@
 #include <Windows.h>
 #include <Shlwapi.h>    // SHFormatDateTimeA
 
+static std::string RemoveLTRMark(std::string& utf8)
+{
+    size_t pos{};
+    while ((pos = utf8.find("\xE2\x80\x8E")) != std::string::npos)
+        utf8.erase(pos, 3);
+    return utf8;
+}
+
 static std::string GetFormatDateTime(FILETIME fileTime)
 {
     // convert FILETIME to format date time
@@ -16,8 +24,8 @@ static std::string GetFormatDateTime(FILETIME fileTime)
 
     auto size = SHFormatDateTime(&fileTime, &pdwFlags, formatDateTime, sizeof(formatDateTime));
     dateTime = ToUtf8String(formatDateTime, size);
-    dateTime.erase(std::remove(std::begin(dateTime), std::end(dateTime), '?'), std::end(dateTime));
-    return dateTime;
+    dateTime = ToUtf8String(formatDateTime, size);
+    return RemoveLTRMark(dateTime);
 }
 
 namespace LogData
