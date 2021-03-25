@@ -1,12 +1,33 @@
 #include "utilities.h"
 
+#include <mutex>
+#include <filesystem>
+
+
+static char* GetCurrentProgramName()
+{
+    static char programName[MAX_PATH]{};
+    if (!*programName)
+        GetModuleFileNameA(NULL, programName, MAX_PATH);
+    return programName;
+}
+
+static std::string GetShortProgramName()
+{
+    std::string programName = GetCurrentProgramName();
+    auto pos = programName.rfind('\\');
+    if (pos == std::string::npos)
+        return "";
+    return programName.substr(pos);
+}
+
 static std::string GetFileExtension(const std::string& s)
 {
     auto extpos = s.rfind('.');
     if (extpos != std::string::npos)
     {
         auto extension = s.substr(extpos);
-        std::transform(std::begin(extension), std::end(extension), std::begin(extension), std::tolower);
+        std::transform(std::begin(extension), std::end(extension), std::begin(extension), [](char c) { return std::tolower(c); });
         return extension;
     }
     return "";
@@ -85,4 +106,25 @@ std::string ToUtf8String(const wchar_t* unicode, const size_t unicode_size)
                             const_cast<char*>(utf8.c_str()), static_cast<int>(utf8.size()),
                             nullptr, nullptr);
     return utf8;
+}
+
+
+void InitLogger(const std::string& logPath)
+{
+    std::filesystem::create_directories(logPath);
+ 
+    logger.open(logPath + GetShortProgramName() + ".txt"s, std::ios_base::app);
+}
+
+std::mutex mutex{};
+
+void Log(const nlohmann::json& json)
+{
+    const std::lock_guard<std::mutex> lock(mutex);
+    logger << json << std::endl;
+}
+
+void LogException(const std::exception& e)
+{
+    Log({ { "error occurred", { "reason", e.what() } } });
 }

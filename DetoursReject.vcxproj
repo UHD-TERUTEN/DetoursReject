@@ -19,12 +19,14 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\WhitelistConnection.h" />
     <ClInclude Include="src\FileAccessInfo.h" />
     <ClInclude Include="src\FileInfo.h" />
     <ClInclude Include="src\ModuleInfo.h" />
     <ClInclude Include="src\utilities.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\WhitelistConnection.cpp" />
     <ClCompile Include="src\dllmain.cpp" />
     <ClCompile Include="src\FileAccessInfo.cpp" />
     <ClCompile Include="src\FileInfo.cpp" />
@@ -157,7 +159,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)\nlohmann-json\single_include;$(SolutionDir)\Detours-master\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\sqlite3;$(SolutionDir)\nlohmann-json\single_include;$(SolutionDir)\Detours-master\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -165,8 +167,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalLibraryDirectories>$(SolutionDir)\Detours-master\lib.X64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>detours.lib;Shlwapi.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\sqlite3;$(SolutionDir)\Detours-master\lib.X64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>detours.lib;Shlwapi.lib;Version.lib;sqlite3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

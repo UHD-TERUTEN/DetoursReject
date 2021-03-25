@@ -4,21 +4,27 @@
 #include "FileAccessInfo.h"
 using namespace LogData;
 
-#include <sstream>
+#include "WhitelistConnection.h"
+using namespace Database;
 
+#include "Logger.h"
 #include "utilities.h"
+
+#include <sstream>
 
 #include <Windows.h>
 
 #include <detours.h>
 
+#define LOG_PATH    R"(D:\logs\)"
+
 using PReadFile = BOOL(WINAPI*)(HANDLE, LPVOID, DWORD, LPDWORD, LPOVERLAPPED);
 static PReadFile TrueReadFile = ReadFile;
 
-static constexpr char pipeName[] = R"(\\.\pipe\RejectLogPipe)";
-
 static std::string cachedFileName = "";
 static BOOL cachedResult = FALSE;
+
+std::ofstream logger{};
 
 
 __declspec(dllexport)
@@ -74,38 +80,15 @@ BOOL WINAPI ReadFileOrReject(   HANDLE        hFile,
     }
     catch (std::exception& e)
     {
-        json = { "error occurred", { "reason", e.what() } };
+        LogException(e);
     }
 
-    // Send the log to agent through a named pipe
-    // And Receive a response which of reject or not
-    // Both pop-up messages and DB connections are handled by the agent
-    HANDLE pipe = CreateFileA(pipeName, GENERIC_ALL, 0, NULL, OPEN_EXISTING, 0, NULL);
+    WhitelistConnection whitelist{};
 
-    if ((pipe != INVALID_HANDLE_VALUE) && (GetLastError() != ERROR_PIPE_BUSY))
+    if (!(ret = whitelist.Includes(json)))
     {
-        DWORD pipeMode = PIPE_READMODE_BYTE;
-        SetNamedPipeHandleState(pipe, &pipeMode, NULL, NULL);
-
-        char buffer[BUFSIZ]{};
-        DWORD nbytes{};
-        std::streamsize count{};
-        std::stringstream ss{};
-
-        ss << json;
-        while (ss.read(buffer, BUFSIZ), (count = ss.gcount()) > 0)
-            (void)WriteFile(pipe, buffer, count, &nbytes, NULL);
-
-        (void)FlushFileBuffers(pipe);
-        (void)memset(buffer, 0, BUFSIZ);
-
-        if (ReadFile(pipe, buffer, 5, &nbytes, NULL))
-        {
-            ret = ("True"s == buffer);
-            (void)FlushFileBuffers(pipe);
-        }
+        Log(json);
     }
-    CloseHandle(pipe);
     return (cachedResult = ret);
 }
 
@@ -127,6 +110,8 @@ void WINAPI ProcessDetach(  HMODULE hModule,
                             DWORD   ul_reason_for_call,
                             LPVOID  lpReserved)
 {
+    InitLogger(LOG_PATH);
+
     DetourTransactionBegin();
     DetourUpdateThread(GetCurrentThread());
     DetourDetach(&(PVOID&)TrueReadFile, ReadFileOrReject);
