@@ -16,8 +16,6 @@ using namespace Database;
 
 #include <detours.h>
 
-#define LOG_PATH    R"(D:\logs\)"
-
 using PReadFile = BOOL(WINAPI*)(HANDLE, LPVOID, DWORD, LPDWORD, LPOVERLAPPED);
 static PReadFile TrueReadFile = ReadFile;
 
@@ -110,7 +108,7 @@ void WINAPI ProcessDetach(  HMODULE hModule,
                             DWORD   ul_reason_for_call,
                             LPVOID  lpReserved)
 {
-    InitLogger(LOG_PATH);
+    InitLogger();
 
     DetourTransactionBegin();
     DetourUpdateThread(GetCurrentThread());

@@ -21,6 +21,13 @@ static std::string GetShortProgramName()
     return programName.substr(pos);
 }
 
+static std::string GetLogDirectoryName()
+{
+    if (const char* applicationRoot = std::getenv("FileAccessControlAgentRoot"))
+        return std::string(applicationRoot) + R"(\Logs)";
+    return R"(C:\DetoursReject\Logs)";
+}
+
 static std::string GetFileExtension(const std::string& s)
 {
     auto extpos = s.rfind('.');
@@ -109,11 +116,12 @@ std::string ToUtf8String(const wchar_t* unicode, const size_t unicode_size)
 }
 
 
-void InitLogger(const std::string& logPath)
+void InitLogger()
 {
-    std::filesystem::create_directories(logPath);
- 
-    logger.open(logPath + GetShortProgramName() + ".txt"s, std::ios_base::app);
+    auto logDirectoryName = GetLogDirectoryName();
+
+    std::filesystem::create_directories(logDirectoryName);
+    logger.open(logDirectoryName + GetShortProgramName() + ".txt"s, std::ios_base::app);
 }
 
 std::mutex mutex{};
