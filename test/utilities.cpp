@@ -2,10 +2,14 @@
 #include "../src/utilities.h"
 #include "../src/utilities.cpp"
 #include "../src/FileAccessInfo.h"
+#include "../src/Logger.h"
 #include <regex>
 #include <filesystem>
 #include <fstream>
 using namespace std::filesystem;
+
+std::ofstream logger{};
+
 
 TEST(UtilitiesTest, CanExecute)
 {

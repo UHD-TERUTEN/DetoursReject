@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Logger.h" />
     <ClInclude Include="src\WhitelistConnection.h" />
     <ClInclude Include="src\FileAccessInfo.h" />
     <ClInclude Include="src\FileInfo.h" />
