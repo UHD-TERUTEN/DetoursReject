@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="resource.h" />
     <ClInclude Include="src\Logger.h" />
     <ClInclude Include="src\WhitelistConnection.h" />
     <ClInclude Include="src\FileAccessInfo.h" />
@@ -33,6 +34,9 @@
     <ClCompile Include="src\FileInfo.cpp" />
     <ClCompile Include="src\ModuleInfo.cpp" />
     <ClCompile Include="src\utilities.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="DetoursReject.rc" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
