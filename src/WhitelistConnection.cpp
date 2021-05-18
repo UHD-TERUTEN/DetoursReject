@@ -1,17 +1,29 @@
 #include "WhitelistConnection.h"
+#include "utilities.h"
 
 namespace Database
 {
+	static std::string GetWhitelistPathName()
+	{
+		if (const char* applicationRoot = std::getenv("FileAccessControlAgentRoot"))
+			return applicationRoot;
+		return R"(C:\Whitelists)";
+	}
+
 	// DbConnection
 	//
 	DbConnection::DbConnection(std::string_view pathname)
+		: db(nullptr)
+		, statement(nullptr)
 	{
-		sqlite3_open(pathname.data(), &db);
+		if (sqlite3_open(pathname.data(), &db) != SQLITE_OK)
+			Log({ { "DbConnection", "sqlite3_open failed." } });
 	}
 
 	DbConnection::~DbConnection()
 	{
-		(void)sqlite3_close(db);
+		if (sqlite3_close(db) != SQLITE_OK)
+			Log({ { "DbConnection", "sqlite3_close failed." } });
 	}
 
 	std::string_view DbConnection::GetErrorMessage() const
@@ -42,7 +54,7 @@ namespace Database
 	// WhitelistConnection
 	//
 	WhitelistConnection::WhitelistConnection()
-		: dbConnection(whitelistPath)
+		: dbConnection(GetWhitelistPathName() + whitelistPath)
 	{
 	}
 
