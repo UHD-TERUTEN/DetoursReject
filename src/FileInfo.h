@@ -28,4 +28,5 @@ namespace LogData
         isHidden
     );
     FileInfo MakeFileInfo(HANDLE hFile);
+    FileInfo MakeFileInfo(std::string fileName);
 }

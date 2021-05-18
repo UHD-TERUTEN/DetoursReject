@@ -8,6 +8,8 @@ using namespace LogData;
 
 #include <nlohmann/json.hpp>
 
+wchar_t* GetCurrentProgramName();
+
 bool IsExecutable(const FileInfo& fileInfo);
 
 std::wstring ToWstring(const std::string& utf8);

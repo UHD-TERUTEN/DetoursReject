@@ -22,8 +22,7 @@ static std::string GetFormatDateTime(FILETIME fileTime)
     wchar_t formatDateTime[BUFSIZ]{};
     std::string dateTime;
 
-    auto size = SHFormatDateTime(&fileTime, &pdwFlags, formatDateTime, sizeof(formatDateTime));
-    dateTime = ToUtf8String(formatDateTime, size);
+    auto size = SHFormatDateTimeW(&fileTime, &pdwFlags, formatDateTime, BUFSIZ);
     dateTime = ToUtf8String(formatDateTime, size);
     return RemoveLTRMark(dateTime);
 }
@@ -38,8 +37,8 @@ namespace LogData
         if (GetFileInformationByHandle(hFile, &handleFileInfo))
         {
             constexpr auto PATHLEN = BUFSIZ * 4;
-            TCHAR path[PATHLEN]{};
-
+            wchar_t path[PATHLEN]{};
+            
             if (auto size = GetFinalPathNameByHandle(hFile, path, PATHLEN, VOLUME_NAME_DOS);
                 0 < size && size < PATHLEN)
             {
@@ -50,6 +49,13 @@ namespace LogData
                 info.isHidden       = static_cast<bool>(handleFileInfo.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN);
             }
         }
+        return info;
+    }
+
+    FileInfo MakeFileInfo(std::string fileName)
+    {
+        FileInfo info{};
+        info.fileName = fileName;
         return info;
     }
 }

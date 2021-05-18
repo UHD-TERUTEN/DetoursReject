@@ -1,3 +1,3 @@
-#include <fstream>
+#include <Windows.h>
 
-extern std::ofstream logger;
+extern HANDLE logger;

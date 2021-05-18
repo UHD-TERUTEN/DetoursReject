@@ -1,20 +1,36 @@
 #include "utilities.h"
 
+#include <cstdlib>
 #include <mutex>
-#include <filesystem>
+#include <algorithm>
 
-
-static char* GetCurrentProgramName()
+static std::string GetFileExtension(const std::string& s)
 {
-    static char programName[MAX_PATH]{};
-    if (!*programName)
-        GetModuleFileNameA(NULL, programName, MAX_PATH);
-    return programName;
+    auto extpos = s.rfind('.');
+    if (extpos != std::string::npos)
+    {
+        auto extension = s.substr(extpos);
+        std::transform(std::begin(extension), std::end(extension), std::begin(extension), std::tolower);
+        return extension;
+    }
+    return "";
+}
+
+wchar_t* GetCurrentProgramName()
+{
+    static wchar_t buffer[MAX_PATH]{};
+    if (std::wcslen(buffer) == 0)
+    {
+        std::memset(buffer, 0, MAX_PATH);
+        GetModuleFileNameW(NULL, buffer, MAX_PATH);
+    }
+    return buffer;
 }
 
 static std::string GetShortProgramName()
 {
-    std::string programName = GetCurrentProgramName();
+    auto wProgramName = GetCurrentProgramName();
+    std::string programName = ToUtf8String(wProgramName, std::wcslen(wProgramName));
     auto pos = programName.rfind('\\');
     if (pos == std::string::npos)
         return "";
@@ -24,20 +40,8 @@ static std::string GetShortProgramName()
 static std::string GetLogDirectoryName()
 {
     if (const char* applicationRoot = std::getenv("FileAccessControlAgentRoot"))
-        return std::string(applicationRoot) + R"(\Logs)";
+        return std::string(applicationRoot) + R"(\RejectLogs)";
     return R"(C:\DetoursReject\Logs)";
-}
-
-static std::string GetFileExtension(const std::string& s)
-{
-    auto extpos = s.rfind('.');
-    if (extpos != std::string::npos)
-    {
-        auto extension = s.substr(extpos);
-        std::transform(std::begin(extension), std::end(extension), std::begin(extension), [](char c) { return std::tolower(c); });
-        return extension;
-    }
-    return "";
 }
 
 bool IsExecutable(const FileInfo& fileInfo)
@@ -115,21 +119,61 @@ std::string ToUtf8String(const wchar_t* unicode, const size_t unicode_size)
     return utf8;
 }
 
+#include <filesystem>
+#include <winternl.h>
+
+using PWriteFile = BOOL(WINAPI*)(
+    HANDLE       hFile,
+    LPCVOID      lpBuffer,
+    DWORD        nNumberOfBytesToWrite,
+    LPDWORD      lpNumberOfBytesWritten,
+    LPOVERLAPPED lpOverlapped
+    );
+using PNativeWriteFile = NTSTATUS(*)(
+    HANDLE           FileHandle,
+    HANDLE           Event,
+    PIO_APC_ROUTINE  ApcRoutine,
+    PVOID            ApcContext,
+    PIO_STATUS_BLOCK IoStatusBlock,
+    PVOID            Buffer,
+    ULONG            Length,
+    PLARGE_INTEGER   ByteOffset,
+    PULONG           Key
+    );
+extern PWriteFile TrueWriteFile;
+extern PNativeWriteFile TrueNtWriteFile;
+extern bool hasNtdll;
+
+std::mutex mutex{};
 
 void InitLogger()
 {
     auto logDirectoryName = GetLogDirectoryName();
 
     std::filesystem::create_directories(logDirectoryName);
-    logger.open(logDirectoryName + GetShortProgramName() + ".txt"s, std::ios_base::app);
+    logger = CreateFileA((logDirectoryName + GetShortProgramName() + ".txt"s).c_str(),
+        FILE_APPEND_DATA,
+        FILE_SHARE_READ,
+        NULL,
+        OPEN_ALWAYS,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL);
 }
-
-std::mutex mutex{};
 
 void Log(const nlohmann::json& json)
 {
-    const std::lock_guard<std::mutex> lock(mutex);
-    logger << json << std::endl;
+    std::lock_guard<std::mutex> lock(mutex);
+    auto text = json.dump() + "\n";
+
+    if (hasNtdll)
+    {
+        IO_STATUS_BLOCK io;
+        (void)TrueNtWriteFile(logger, NULL, NULL, NULL, &io, (PVOID)text.c_str(), (ULONG)text.length(), 0, NULL);
+    }
+    else
+    {
+        (void)TrueWriteFile(logger, (PVOID)text.c_str(), (ULONG)text.length(), 0, NULL);
+    }
 }
 
 void LogException(const std::exception& e)
