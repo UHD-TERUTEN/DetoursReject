@@ -18,6 +18,8 @@ std::string ToUtf8String(const wchar_t* unicode, const size_t unicode_size);
 
 void InitLogger();
 
+void CloseLogger();
+
 void Log(const nlohmann::json& json);
 
 void LogException(const std::exception& e);
@@ -30,3 +32,9 @@ nlohmann::json GetJson(const FileInfoT& info)
     to_json(j, info);
     return j;
 }
+
+bool OpenNamedPipe();
+
+void CloseNamedPipe();
+
+void NotifyReject(const nlohmann::json& logData);

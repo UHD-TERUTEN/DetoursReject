@@ -133,7 +133,6 @@ static PNativeOpenFile TrueZwOpenFile       = (PNativeOpenFile)DetourFindFunctio
 static PNativeReadFile TrueZwReadFile       = (PNativeReadFile)DetourFindFunction("ntdll.dll", "ZwReadFile");
 static PNativeWriteFile TrueZwWriteFile     = (PNativeWriteFile)DetourFindFunction("ntdll.dll", "ZwWriteFile");
 
-WhitelistConnection whitelist{};
 HANDLE logger{};
 
 static std::string prevFunction{};
@@ -288,8 +287,11 @@ HANDLE WINAPI DetouredCreateFileA(
         auto log = MakeLog(lpFileName, __FUNCTION__);
         prevFunction = __FUNCTION__;
 
-        if (prevRejected = !whitelist.Includes(log))
+        if (prevRejected = !WhitelistConnection::Instance().Includes(log))
+        {
+            NotifyReject(log);
             Log(log);
+        }
         else
         {
             ret = TrueCreateFileA
@@ -328,8 +330,11 @@ HANDLE WINAPI DetouredCreateFileW(
         auto log = MakeLog(ToUtf8String(lpFileName, wcslen(lpFileName)), __FUNCTION__);
         prevFunction = __FUNCTION__;
 
-        if (prevRejected = !whitelist.Includes(log))
+        if (prevRejected = !WhitelistConnection::Instance().Includes(log))
+        {
+            NotifyReject(log);
             Log(log);
+        }
         else
         {
             ret = TrueCreateFileW
@@ -380,8 +385,11 @@ BOOL WINAPI DetouredReadFile(
         prevFunction = __FUNCTION__;
         prevFileHandle = hFile;
 
-        if (prevRejected = !whitelist.Includes(log))
+        if (prevRejected = !WhitelistConnection::Instance().Includes(log))
+        {
+            NotifyReject(log);
             Log(log);
+        }
         else
         {
             ret = TrueReadFile
@@ -431,8 +439,11 @@ BOOL WINAPI DetouredReadFileEx(
         prevFunction = __FUNCTION__;
         prevFileHandle = hFile;
 
-        if (prevRejected = !whitelist.Includes(log))
+        if (prevRejected = !WhitelistConnection::Instance().Includes(log))
+        {
+            NotifyReject(log);
             Log(log);
+        }
         else
         {
             ret = TrueReadFileEx
@@ -482,8 +493,11 @@ BOOL WINAPI DetouredWriteFile(
         prevFunction = __FUNCTION__;
         prevFileHandle = hFile;
 
-        if (prevRejected = !whitelist.Includes(log))
+        if (prevRejected = !WhitelistConnection::Instance().Includes(log))
+        {
+            NotifyReject(log);
             Log(log);
+        }
         else
         {
             ret = TrueWriteFile
@@ -533,8 +547,11 @@ BOOL WINAPI DetouredWriteFileEx(
         prevFunction = __FUNCTION__;
         prevFileHandle = hFile;
 
-        if (prevRejected = !whitelist.Includes(log))
+        if (prevRejected = !WhitelistConnection::Instance().Includes(log))
+        {
+            NotifyReject(log);
             Log(log);
+        }
         else
         {
             ret = TrueWriteFileEx
@@ -578,8 +595,11 @@ NTSTATUS DetouredNtCreateFile
         auto log = MakeLog(FileHandle, __FUNCTION__);
         prevFunction = __FUNCTION__;
 
-        if (prevRejected = !whitelist.Includes(log))
+        if (prevRejected = !WhitelistConnection::Instance().Includes(log))
+        {
+            NotifyReject(log);
             Log(log);
+        }
         else
         {
             ret = TrueNtCreateFile
@@ -622,8 +642,11 @@ NTSTATUS DetouredNtOpenFile
         auto log = MakeLog(FileHandle, __FUNCTION__);
         prevFunction = __FUNCTION__;
 
-        if (prevRejected = !whitelist.Includes(log))
+        if (prevRejected = !WhitelistConnection::Instance().Includes(log))
+        {
+            NotifyReject(log);
             Log(log);
+        }
         else
         {
             ret = TrueNtOpenFile
@@ -666,8 +689,11 @@ NTSTATUS DetouredNtReadFile
         prevFunction = __FUNCTION__;
         prevFileHandle = FileHandle;
 
-        if (prevRejected = !whitelist.Includes(log))
+        if (prevRejected = !WhitelistConnection::Instance().Includes(log))
+        {
+            NotifyReject(log);
             Log(log);
+        }
         else
         {
             ret = TrueNtReadFile
@@ -712,8 +738,11 @@ NTSTATUS DetouredNtWriteFile
         prevFunction = __FUNCTION__;
         prevFileHandle = FileHandle;
 
-        if (prevRejected = !whitelist.Includes(log))
+        if (prevRejected = !WhitelistConnection::Instance().Includes(log))
+        {
+            NotifyReject(log);
             Log(log);
+        }
         else
         {
             ret = TrueNtWriteFile
@@ -762,8 +791,11 @@ NTSTATUS DetouredZwCreateFile
         auto log = MakeLog(FileHandle, __FUNCTION__);
         prevFunction = __FUNCTION__;
 
-        if (prevRejected = !whitelist.Includes(log))
+        if (prevRejected = !WhitelistConnection::Instance().Includes(log))
+        {
+            NotifyReject(log);
             Log(log);
+        }
         else
         {
             ret = TrueZwCreateFile
@@ -806,8 +838,11 @@ NTSTATUS DetouredZwOpenFile
         auto log = MakeLog(FileHandle, __FUNCTION__);
         prevFunction = __FUNCTION__;
 
-        if (prevRejected = !whitelist.Includes(log))
+        if (prevRejected = !WhitelistConnection::Instance().Includes(log))
+        {
+            NotifyReject(log);
             Log(log);
+        }
         else
         {
             ret = TrueZwOpenFile
@@ -849,8 +884,11 @@ NTSTATUS DetouredZwReadFile
         prevFunction = __FUNCTION__;
         prevFileHandle = FileHandle;
 
-        if (prevRejected = !whitelist.Includes(log))
+        if (prevRejected = !WhitelistConnection::Instance().Includes(log))
+        {
+            NotifyReject(log);
             Log(log);
+        }
         else
         {
             ret = TrueZwReadFile
@@ -895,8 +933,11 @@ NTSTATUS DetouredZwWriteFile
         prevFunction = __FUNCTION__;
         prevFileHandle = FileHandle;
 
-        if (prevRejected = !whitelist.Includes(log))
+        if (prevRejected = !WhitelistConnection::Instance().Includes(log))
+        {
+            NotifyReject(log);
             Log(log);
+        }
         else
         {
             ret = TrueZwWriteFile
@@ -945,6 +986,8 @@ void WINAPI ProcessAttach(  HMODULE hModule,
     InitLogger();
     try
     {
+        WhitelistConnection::Instance();
+        AgentDbConnection::Instance();
         GetProcessInfo();   // Caching result
     }
     catch (std::exception& e)
@@ -1012,6 +1055,8 @@ void WINAPI ProcessDetach(  HMODULE hModule,
         DetourDetach(&(PVOID&)TrueWriteFileEx, DetouredWriteFileEx);
     }
     DetourTransactionCommit();
+
+    CloseLogger();
 }
 
 

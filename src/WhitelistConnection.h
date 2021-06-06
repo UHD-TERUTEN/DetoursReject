@@ -12,6 +12,10 @@ namespace Database
 
 		std::string_view GetErrorMessage() const;
 
+		bool Insert(std::string_view sql);
+		bool Includes(std::string_view sql);
+
+	private:
 		bool Execute(std::string_view sql);
 
 	private:
@@ -25,10 +29,31 @@ namespace Database
 		WhitelistConnection();
 		~WhitelistConnection() = default;
 
-		bool Includes(nlohmann::json logData);
+		static WhitelistConnection& Instance();
+
+		bool Includes(const nlohmann::json& logData);
+
+	public:
+		static const std::string path;
 
 	private:
 		DbConnection dbConnection;
-		const char* whitelistPath = "whitelist.sqlite";
+	};
+
+	class AgentDbConnection
+	{
+	public:
+		AgentDbConnection();
+		~AgentDbConnection() = default;
+
+		static AgentDbConnection& Instance();
+
+		bool Insert(const nlohmann::json& logData);
+
+	public:
+		static const std::string path;
+
+	private:
+		DbConnection dbConnection;
 	};
 }

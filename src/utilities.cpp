@@ -160,6 +160,11 @@ void InitLogger()
         NULL);
 }
 
+void CloseLogger()
+{
+    CloseHandle(logger);
+}
+
 void Log(const nlohmann::json& json)
 {
     std::lock_guard<std::mutex> lock(mutex);
@@ -179,4 +184,68 @@ void Log(const nlohmann::json& json)
 void LogException(const std::exception& e)
 {
     Log({ { "error occurred", { "reason", e.what() } } });
+}
+
+using PCreateFileA = HANDLE(WINAPI*)(
+    LPCSTR                lpFileName,
+    DWORD                 dwDesiredAccess,
+    DWORD                 dwShareMode,
+    LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+    DWORD                 dwCreationDisposition,
+    DWORD                 dwFlagsAndAttributes,
+    HANDLE                hTemplateFile
+);
+extern PCreateFileA TrueCreateFileA;
+
+static constexpr const auto pipeName = R"(\\.\pipe\RejectLogPipe)";
+static HANDLE pipe{};
+std::mutex pipeMutex{};
+
+bool OpenNamedPipe()
+{
+    while (true)
+    {
+        pipe = TrueCreateFileA
+        (
+            pipeName,
+            GENERIC_WRITE,
+            0,
+            NULL,
+            OPEN_EXISTING,
+            0,
+            NULL
+        );
+        if (pipe != INVALID_HANDLE_VALUE)
+            return true;
+        if (pipe == INVALID_HANDLE_VALUE && (GetLastError() != ERROR_PIPE_BUSY || !WaitNamedPipeA(pipeName, 3000)))
+        {
+            return false;
+        }
+    }
+}
+
+void CloseNamedPipe()
+{
+    CloseHandle(pipe);
+}
+
+void NotifyReject(const nlohmann::json& logData)
+{
+    std::lock_guard<std::mutex> lock(pipeMutex);
+
+    OpenNamedPipe();
+    {
+        auto text = logData.dump();
+
+        if (hasNtdll)
+        {
+            IO_STATUS_BLOCK io;
+            (void)TrueNtWriteFile(pipe, NULL, NULL, NULL, &io, (PVOID)text.c_str(), (ULONG)text.length(), 0, NULL);
+        }
+        else
+        {
+            (void)TrueWriteFile(pipe, (PVOID)text.c_str(), (ULONG)text.length(), 0, NULL);
+        }
+    }
+    CloseNamedPipe();
 }

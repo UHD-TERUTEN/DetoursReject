@@ -15,16 +15,10 @@ static std::string RemoveLTRMark(std::string& utf8)
     return utf8;
 }
 
-static std::string GetFormatDateTime(FILETIME fileTime)
+static uint64_t GetIntegerDateTime(FILETIME fileTime)
 {
-    // convert FILETIME to format date time
-    DWORD pdwFlags = FDTF_DEFAULT;
-    wchar_t formatDateTime[BUFSIZ]{};
-    std::string dateTime;
-
-    auto size = SHFormatDateTimeW(&fileTime, &pdwFlags, formatDateTime, BUFSIZ);
-    dateTime = ToUtf8String(formatDateTime, size);
-    return RemoveLTRMark(dateTime);
+    return (uint64_t)(fileTime.dwHighDateTime) << 32
+        | fileTime.dwLowDateTime;
 }
 
 namespace LogData
@@ -43,9 +37,9 @@ namespace LogData
                 0 < size && size < PATHLEN)
             {
                 info.fileName       = ToUtf8String(path + 4, size - 4); // remove prepended '\\?\'
-                info.fileSize       = ((long long)(handleFileInfo.nFileSizeHigh) << 32) | handleFileInfo.nFileSizeLow;
-                info.creationTime   = GetFormatDateTime(handleFileInfo.ftCreationTime);
-                info.lastWriteTime  = GetFormatDateTime(handleFileInfo.ftLastWriteTime);
+                info.fileSize       = ((uint64_t)(handleFileInfo.nFileSizeHigh) << 32) | handleFileInfo.nFileSizeLow;
+                info.creationTime   = GetIntegerDateTime(handleFileInfo.ftCreationTime);
+                info.lastWriteTime  = GetIntegerDateTime(handleFileInfo.ftLastWriteTime);
                 info.isHidden       = static_cast<bool>(handleFileInfo.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN);
             }
         }
@@ -55,7 +49,7 @@ namespace LogData
     FileInfo MakeFileInfo(std::string fileName)
     {
         FileInfo info{};
-        info.fileName = fileName;
+        info.fileName = fileName.substr(4); // remove prepended '\\?\'
         return info;
     }
 }

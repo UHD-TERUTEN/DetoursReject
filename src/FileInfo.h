@@ -13,9 +13,9 @@ namespace LogData
     struct FileInfo
     {
         std::string fileName        = "(EMPTY)"s;
-        long long   fileSize        = 0LL;
-        std::string creationTime    = "(EMPTY)"s;
-        std::string lastWriteTime   = "(EMPTY)"s;
+        uint64_t    fileSize        = 0ULL;
+        uint64_t    creationTime    = 0ULL;
+        uint64_t    lastWriteTime   = 0ULL;
         bool        isHidden        = false;
     };
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE
